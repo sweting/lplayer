@@ -1,0 +1,6 @@
+<ng-container *ngIf="lautFMStationInfo">
+  <h1>{{lautFMStationInfo.display_name}}</h1>
+  <h2>{{currentSong}} - {{currentArtist}}</h2>
+  <h3>{{currentAlbum}}</h3>
+  <img [src]="coverSrc" *ngIf="coverSrc != ''">
+</ng-container>
