@@ -33,7 +33,9 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "src/app/overview/icecast-metadata-player-1.10.3.min.js"
+            ]
           },
           "configurations": {
             "production": {

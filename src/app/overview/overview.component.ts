@@ -3,6 +3,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 declare var DZ: any;
+declare var IcecastMetadataPlayer: any;
+
 
 @Component({
   selector: 'app-overview',
@@ -26,6 +28,10 @@ export class OverviewComponent implements OnInit, OnDestroy {
 
   public lautFMStationInfo: any;
 
+  /** Player-Element */
+  public audio: any;
+
+  /** Flag für Songänderung */
   private _songChange: boolean;
 
   /** Subscription für die Routenänderung */
@@ -43,6 +49,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
     this.currentAlbum = '';
     this.configuredStation = '';
     this._songChange = false;
+    this.audio = null;
   }
 
 
@@ -71,6 +78,12 @@ export class OverviewComponent implements OnInit, OnDestroy {
         }, 10000);
       }
       this.refreshSonfgInfo();
+
+      // Audiostream laden
+      this.audio = new IcecastMetadataPlayer('https://suedwelle.stream.laut.fm/suedwelle'/*this.lautFMStationInfo.stream_url*/, {
+        onMetadata: (metadata: any) => {console.log(metadata)}
+      });
+
     });
   }
 
@@ -98,6 +111,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
   /** Cover laden */
   loadCover(noAlbum: boolean = false) {
     let album = '';
+    this.coverSrc = '';
     if (this.currentAlbum != '' && !noAlbum)
       album = 'album:"' + this.currentAlbum + '"';
     DZ.api('/search?q=artist:"' + this.currentArtist + '"track:"' + this.currentSong + '"' + album, (res: any) =>  {
