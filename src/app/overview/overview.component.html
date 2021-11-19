@@ -20,14 +20,14 @@
   <div class="footer-bar">
     <div class="footer-container" *ngIf="audio">
       <img src="assets/play.png" class="player-btn" (click)="onPlay()" *ngIf="audio.state == 'stopped'">
-      <img src="assets/stop.png" class="player-btn" *ngIf="audio.state != 'playing' && audio.state != 'stopped'">
+      <img src="assets/wait.png" class="player-btn" *ngIf="audio.state != 'playing' && audio.state != 'stopped'">
       <img src="assets/stop.png" class="player-btn" (click)="onStop()" *ngIf="audio.state == 'playing'">
     </div>
 
-    <div class="footer-container" *ngIf="player">
-      <img src="assets/play.png" class="player-btn" (click)="onPlay()" *ngIf="player.paused">
+    <div class="footer-container" *ngIf="HTML5player">
+      <img src="assets/play.png" class="player-btn" (click)="onPlay()" *ngIf="playerState != 'playing'">
       <!--<img src="assets/stop.png" class="player-btn" *ngIf="audio.state != 'playing' && audio.state != 'stopped'">-->
-      <img src="assets/stop.png" class="player-btn" (click)="onStop()" *ngIf="!player.paused">
+      <img src="assets/stop.png" class="player-btn" (click)="onStop()" *ngIf="playerState == 'playing'">
     </div>
 
     <div class="footer-text">

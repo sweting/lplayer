@@ -1,20 +1,33 @@
 import { HttpClient } from '@angular/common/http';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 
 declare var DZ: any;
 declare var IcecastMetadataPlayer: any;
+declare var MediaMetadata: any;
+declare var navigator: any;
+declare var MediaImage: any;
 
+/** Definition wie die Stream-Metadaten aussehen, die aus der Lib kommen */
 export interface StreamMetaData {
   StreamTitle: string;
   StreamUrl: string;
+}
+
+/** Status des Players */
+export enum PlayerState {
+  stopped = 'stopped',
+  playing = 'playing',
+  loading = 'loading',
+  error = 'error'
 }
 
 
 @Component({
   selector: 'app-overview',
   templateUrl: './overview.component.html',
-  styleUrls: ['./overview.component.scss']
+  styleUrls: ['./overview.component.scss'],
 })
 export class OverviewComponent implements OnInit, OnDestroy {
 
@@ -39,10 +52,14 @@ export class OverviewComponent implements OnInit, OnDestroy {
   /** Flag für Songänderung */
   private _songChange: boolean;
 
-  /** Subscription für die Routenänderung */
-  private sub: any;
+  /** Adresse des aktuellen Audiostreams */
+  public currentStreamSrc: string;
 
-  public player: any = null;
+  /** Der HTML5-Standardplayer */
+  public HTML5player: any = null;
+
+  /** Status des Players */
+  public playerState: PlayerState;
 
   /** Wenn False, wird kein Update mehr über die LFM-API gemacht! */
   private _songUpdateFromAPI: boolean = true;
@@ -55,19 +72,28 @@ export class OverviewComponent implements OnInit, OnDestroy {
       this.refreshSonfgInfoAPI();
   }
 
+  /** Subscription für die Routenänderung */
+  private sub: any;
+
+  /** Icon muss geändert werden können */
+  private favIcon: HTMLLinkElement | null = document.querySelector('#appIcon');
+
   /** Kosntruktion */
   constructor(
     private http: HttpClient,
     private route: ActivatedRoute,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private titleServ: Title
   ) {
     this.coverSrc = '';
     this.currentArtist = '';
     this.currentSong = '';
     this.currentAlbum = '';
     this.configuredStation = '';
+    this.currentStreamSrc = ' ';
     this._songChange = false;
     this.audio = null;
+    this.playerState = PlayerState.stopped;
   }
 
 
@@ -75,7 +101,9 @@ export class OverviewComponent implements OnInit, OnDestroy {
     this.sub.unsubscribe();
   }
 
-
+  /**
+   * Initislisierung der Ansicht
+   */
   ngOnInit(): void {
     this.sub = this.route.params.subscribe(params => {
       this.configuredStation = params['station_name'];
@@ -86,40 +114,93 @@ export class OverviewComponent implements OnInit, OnDestroy {
 
   }
 
+  /**
+   * Wenn verfügbar die Mediensteuerung registrieren
+   */
+  intitMediaSession() {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.setActionHandler('play', () => { this.onPlay(); });
+      navigator.mediaSession.setActionHandler('pause', () => { this.onStop(); });
+      navigator.mediaSession.setActionHandler('stop', () => { this.onStop(); });
+      navigator.mediaSession.playbackState = 'paused';
+    }
+  }
+
   /** Lädt die Infos zum Sender */
   loadStationInfo() {
     this.http.get(this.apiURI_laut + 'station/' + this.configuredStation).subscribe((res) => {
       this.lautFMStationInfo = res;
 
-      this.refreshSonfgInfoAPI();
+      if (this.lautFMStationInfo && this.lautFMStationInfo.stream_url)
+      {
+        this.refreshSonfgInfoAPI();
 
-      // Hier der Code, um den Stream gescheit auszulesen.
-      //'https://suedwelle.stream.laut.fm/suedwelle'
-      /*this.audio = new IcecastMetadataPlayer('http://localhost:8080/'+this.lautFMStationInfo.stream_url, {
-        onMetadata: this.onMetadataChange.bind(this),
-      });*/
+        this.currentStreamSrc = this.lautFMStationInfo.stream_url;
 
-      this.player = new Audio(this.lautFMStationInfo.stream_url);
+        // Browsertitel und Icon
+        this.titleServ.setTitle(this.lautFMStationInfo.display_name + ' | Lplayer');
+        if (this.favIcon)
+        {
+          this.favIcon.href = this.lautFMStationInfo.images.station_80x80;
+        }
+
+        // Hier der Code, um den Stream gescheit auszulesen.
+        //'https://suedwelle.stream.laut.fm/suedwelle'
+        /*this.audio = new IcecastMetadataPlayer('http://localhost:8080/'+this.lautFMStationInfo.stream_url, {
+          onMetadata: this.onMetadataChange.bind(this),
+        });*/
+
+        // Die Stream-Resource wird geladen, sobald auf Play gedrückt wird
+        this.HTML5player = new Audio(' ');
+
+        // Mediensteuerung des PCs unterstützen
+        this.intitMediaSession();
+      }
 
     });
   }
 
+  /**
+   * Starte den aktuellen Audio-Stream
+   */
   onPlay() {
     if (this.audio) {
       this.audio.play();
-    } else if (this.player) {
-      this.player.play();
+      this.playerState = PlayerState.playing;
+    } else if (this.HTML5player) {
+      this.HTML5player.src = this.currentStreamSrc;
+      this.HTML5player.play();
+      this.playerState = PlayerState.playing;
     }
+
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = 'playing';
+    }
+
+    this.cd.detectChanges();
   }
 
+  /**
+   * Stoppe den aktuellen Audio-Stream
+   */
   onStop() {
     if (this.audio) {
       this.audio.stop();
       if (!this.songUpdateFromAPI)
         this.songUpdateFromAPI = true;
-    } else if (this.player) {
-      this.player.pause();
+
+        this.playerState = PlayerState.stopped;
+    } else if (this.HTML5player) {
+      this.HTML5player.pause();
+      this.HTML5player.src = ' ';
+      this.playerState = PlayerState.stopped;
     }
+
+    if ('mediaSession' in navigator) {
+      this.intitMediaSession();
+    }
+
+    this.cd.detectChanges();
   }
 
 
@@ -208,6 +289,21 @@ export class OverviewComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Aktualisiert die Songinfos in der MediaSession.
+   * Wird von der loadCover-Methode aufgerufen, damit auch das Cover entsprechend dabei ist.
+   */
+  updateSongInfoMediaSession(artwork: any[]) {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: this.currentSong,
+        artist: this.currentArtist,
+        album: this.lautFMStationInfo.display_name,
+        artwork: artwork
+      });
+    }
+  }
+
+  /**
    * Versucht mittels Deezer ein Cover zu dem aktuell
    * laufenden Song zu laden.
    * @param noAlbum Kein Album in der Suche verwenden
@@ -218,12 +314,32 @@ export class OverviewComponent implements OnInit, OnDestroy {
     param_album = 'album:"' + this.currentAlbum + '"';
     DZ.api('/search?q=artist:"' + this.currentArtist + '"track:"' + this.currentSong + '"' + param_album, (res: any) =>  {
       if (res.data && res.data.length > 0) {
-        this.coverSrc = res.data[0].album.cover_medium;
+
+        const mediaElement = res.data[0]; // Verwendetes Ergebnis aus der API
+
+        this.coverSrc = mediaElement.album.cover_medium;
+
+        var images = [
+          { src: mediaElement.album.cover_small, sizes: '56x56', type: 'image/jpg' },
+          { src: mediaElement.album.cover_medium, sizes: '250x250', type: 'image/jpg' },
+          { src: mediaElement.album.cover_big, sizes: '500x500', type: 'image/jpg' },
+          { src: mediaElement.album.cover_xl, sizes: '1000x1000', type: 'image/jpg' },
+        ];
+
+        this.updateSongInfoMediaSession(images);
         this.cd.detectChanges();
       } else if (!noAlbum) {
         this.loadCover(true); // Nochmal ohne Album versuchen
       } else {
         this.coverSrc = '';
+
+        var images = [
+          { src: this.lautFMStationInfo.images.station_80x80,   sizes: '80x80',   type: 'image/png' },
+          { src: this.lautFMStationInfo.images.station_120x120, sizes: '120x120', type: 'image/png' },
+          { src: this.lautFMStationInfo.images.station_640x640, sizes: '640x640', type: 'image/png' },
+        ];
+
+        this.updateSongInfoMediaSession(images);
         this.cd.detectChanges();
       }
     });
