@@ -41,6 +41,7 @@
 
 .middle-content img {
   max-height: calc(100vh - 150px);
+  max-width:  calc(100vw - 20px);
   padding: 10px;
   margin: auto;
   display: block;

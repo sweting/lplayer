@@ -8,6 +8,7 @@ declare var IcecastMetadataPlayer: any;
 declare var MediaMetadata: any;
 declare var navigator: any;
 declare var MediaImage: any;
+declare var MediaSessionActions: any;
 
 /** Definition wie die Stream-Metadaten aussehen, die aus der Lib kommen */
 export interface StreamMetaData {
@@ -168,6 +169,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
       this.audio.play();
       this.playerState = PlayerState.playing;
     } else if (this.HTML5player) {
+      this.HTML5player.src = ' ';
       this.HTML5player.src = this.currentStreamSrc;
       this.HTML5player.play();
       this.playerState = PlayerState.playing;
@@ -192,12 +194,11 @@ export class OverviewComponent implements OnInit, OnDestroy {
         this.playerState = PlayerState.stopped;
     } else if (this.HTML5player) {
       this.HTML5player.pause();
-      this.HTML5player.src = ' ';
       this.playerState = PlayerState.stopped;
     }
 
     if ('mediaSession' in navigator) {
-      this.intitMediaSession();
+      navigator.mediaSession.playbackState = 'paused';
     }
 
     this.cd.detectChanges();
