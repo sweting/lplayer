@@ -341,7 +341,6 @@ export class OverviewComponent implements OnInit, OnDestroy {
 
         this.updateSongInfoMediaSession(images);
         this.cd.detectChanges();
-        return;
       }
     });
   }
