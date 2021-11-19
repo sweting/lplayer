@@ -224,7 +224,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
         this.loadCover(true); // Nochmal ohne Album versuchen
       } else {
         this.coverSrc = '';
-        return;
+        this.cd.detectChanges();
       }
     });
   }
