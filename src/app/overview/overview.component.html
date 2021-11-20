@@ -30,6 +30,17 @@
       <img src="assets/stop.png" class="player-btn" (click)="onStop()" *ngIf="playerState == 'playing'">
     </div>
 
+    <div class="footer-text" >
+      <img src="assets/volume_up.png" class="player-btn" width="24" (click)="showVolumeSlider = !showVolumeSlider" *ngIf="null != volume && volume > 0">
+      <img src="assets/volume_off.png" class="player-btn" width="24" (click)="showVolumeSlider = !showVolumeSlider" *ngIf="null != volume && volume == 0">
+      <!--<img src="assets/stop.png" class="player-btn" *ngIf="audio.state != 'playing' && audio.state != 'stopped'">-->
+      <!--<img src="assets/stop.png" class="player-btn" (click)="onStop()" *ngIf="playerState == 'playing'">-->
+    </div>
+
+    <div class="footer-container" *ngIf="showVolumeSlider">
+      <mat-slider min="0" max="1" step="0.02" [(value)]="volume"></mat-slider>
+    </div>
+
     <div class="footer-text">
       <span style="font-size: 12pt; font-weight: bold;">{{currentSong}}</span><br>
       <span style="font-size: 11pt;">{{currentArtist}}</span>
