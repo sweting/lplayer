@@ -1,5 +1,6 @@
+import { DOCUMENT } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 
@@ -45,13 +46,17 @@ export class OverviewComponent implements OnInit, OnDestroy {
 
   public currentAlbum: string;
 
+  /** Stationsdaten aus er LautFM-API */
   public lautFMStationInfo: any;
+
+  /**
+   * Gibt an, ob der Playout über dei icecast-metadata-lib erfolgen
+   * soll und die Metadaten (aktueller Song) direkt aus dem Stream gelesen werden.
+   */
+  public IceCaseDirect: boolean = false;
 
   /** Player-Element */
   public audio: any;
-
-  /** Flag für Songänderung */
-  private _songChange: boolean;
 
   /** Adresse des aktuellen Audiostreams */
   public currentStreamSrc: string;
@@ -61,6 +66,10 @@ export class OverviewComponent implements OnInit, OnDestroy {
 
   /** Status des Players */
   public playerState: PlayerState;
+
+  /** Flag für Songänderung */
+  private _songChange: boolean;
+
 
   /** Wenn False, wird kein Update mehr über die LFM-API gemacht! */
   private _songUpdateFromAPI: boolean = true;
@@ -73,18 +82,38 @@ export class OverviewComponent implements OnInit, OnDestroy {
       this.refreshSonfgInfoAPI();
   }
 
+  /** Lautstärke an den jeweiligen Player durchreiceh */
+  public get volume(): number | null {
+    if (this.audio) {
+      return this.audio.audioElement.volume;
+    } else if (this.HTML5player) {
+      return this.HTML5player.volume;
+    }
+    return 1;
+  }
+  public set volume(val: number | null) {
+    if (this.audio) {
+      this.audio.audioElement.volume = val;
+    } else if (this.HTML5player) {
+      this.HTML5player.volume = val;
+    }
+  }
+  /** Flag, dass die Anzeige des Lautsärkenreglers bestimmt */
+  public showVolumeSlider: boolean = false;
+
   /** Subscription für die Routenänderung */
   private sub: any;
 
   /** Icon muss geändert werden können */
-  private favIcon: HTMLLinkElement | null = document.querySelector('#appIcon');
+  private favIcon: HTMLLinkElement | null;
 
   /** Kosntruktion */
   constructor(
     private http: HttpClient,
     private route: ActivatedRoute,
     private cd: ChangeDetectorRef,
-    private titleServ: Title
+    private titleServ: Title,
+    @Inject(DOCUMENT) private readonly document: any
   ) {
     this.coverSrc = '';
     this.currentArtist = '';
@@ -95,6 +124,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
     this._songChange = false;
     this.audio = null;
     this.playerState = PlayerState.stopped;
+    this.favIcon = document.querySelector('#appIcon');
   }
 
 
@@ -106,10 +136,15 @@ export class OverviewComponent implements OnInit, OnDestroy {
    * Initislisierung der Ansicht
    */
   ngOnInit(): void {
+    // Werte die übergebenen Routen-Parameter aus
     this.sub = this.route.params.subscribe(params => {
       this.configuredStation = params['station_name'];
 
-      this.loadStationInfo();
+      // Rountingdaten abfragen
+      this.route.data.subscribe(data => {
+        this.IceCaseDirect = data.icecastMeta;
+        this.loadStationInfo();
+      });
     });
 
 
@@ -145,19 +180,41 @@ export class OverviewComponent implements OnInit, OnDestroy {
           this.favIcon.href = this.lautFMStationInfo.images.station_80x80;
         }
 
-        // Hier der Code, um den Stream gescheit auszulesen.
-        //'https://suedwelle.stream.laut.fm/suedwelle'
-        /*this.audio = new IcecastMetadataPlayer('http://localhost:8080/'+this.lautFMStationInfo.stream_url, {
-          onMetadata: this.onMetadataChange.bind(this),
-        });*/
+        // Den Icecastplayer nur erst jetzt laden
+        if (this.IceCaseDirect)
+        {
+          if ('undefined' == typeof IcecastMetadataPlayer) {
+            const script = this.document.createElement('script');
+            script.type = 'text/javascript';
+            script.async = true;
+            script.src = 'assets/icecast-metadata-player-1.10.3.min.js';
+            script.onload = () => {
+              this.loadIcecasplayer();
+            };
 
-        // Die Stream-Resource wird geladen, sobald auf Play gedrückt wird
-        this.HTML5player = new Audio(' ');
+            this.document.body.appendChild(script);
+          } else {
+            this.loadIcecasplayer();
+          }
+        } else
+        {
+          // Die Stream-Resource wird geladen, sobald auf Play gedrückt wird
+          this.HTML5player = new Audio(' ');
+        }
 
         // Mediensteuerung des PCs unterstützen
         this.intitMediaSession();
       }
 
+    });
+  }
+
+
+  loadIcecasplayer() {
+    // Hier der Code, um den Stream gescheit auszulesen.
+    //'https://suedwelle.stream.laut.fm/suedwelle'
+    this.audio = new IcecastMetadataPlayer(/*'http://localhost:8080/'+*/this.lautFMStationInfo.stream_url, {
+      onMetadata: this.onMetadataChange.bind(this),
     });
   }
 
@@ -173,6 +230,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
       this.HTML5player.src = this.currentStreamSrc;
       this.HTML5player.play();
       this.playerState = PlayerState.playing;
+      this.intitMediaSession();
     }
 
     if ('mediaSession' in navigator) {
@@ -225,19 +283,22 @@ export class OverviewComponent implements OnInit, OnDestroy {
         // Datum manuell parsen, da kein Standardformat und von Browsersprache abhängig
         // TODO: Zeitzone mit berücksichtigen
         const sstr = new String(res.ends_at);
-        const matches = sstr.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})\s([0-9]{2}):([0-9]{2}):([0-9]{2}).*?$/);
+        const matches = sstr.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})\s([0-9]{2}):([0-9]{2}):([0-9]{2})\s([+\-]\d{2}).*?$/);
         var next = 10000;
         if (matches) {
-          const endDate = new Date(
+          const endDate = new Date();
+          endDate.setUTCFullYear(
             Number(matches[1]),
-            Number(matches[2])-1, // Monat ist 0 indexiert
-            Number(matches[3]),
-            Number(matches[4]),
+            Number(matches[2]) - 1, // Monat ist 0 indexiert
+            Number(matches[3])
+          );
+          endDate.setUTCHours(
+            Number(matches[4]) + (Number(matches[7])*-1),
             Number(matches[5]),
             Number(matches[6])
           );
 
-          next = (endDate.getTime() - Date.now()) + 3000;
+          next = (endDate.getTime() - Date.now()) + 300;
         }
 
         console.log(next);
@@ -318,7 +379,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
 
         const mediaElement = res.data[0]; // Verwendetes Ergebnis aus der API
 
-        this.coverSrc = mediaElement.album.cover_medium;
+        this.coverSrc = mediaElement.album.cover_big;
 
         var images = [
           { src: mediaElement.album.cover_small, sizes: '56x56', type: 'image/jpg' },

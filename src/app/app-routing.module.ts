@@ -4,7 +4,8 @@ import { OverviewComponent } from './overview/overview.component';
 
 const routes: Routes = [
   {path: '', redirectTo: '/suedwelle', pathMatch: 'full'},
-  {path: ':station_name', component: OverviewComponent }
+  {path: ':station_name', component: OverviewComponent, data: {icecastMeta: false} },
+  {path: ':station_name/direct', component: OverviewComponent, data: {icecastMeta: true} }
 ];
 
 @NgModule({
