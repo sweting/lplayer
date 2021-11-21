@@ -302,6 +302,9 @@ export class OverviewComponent implements OnInit, OnDestroy {
         }
 
         console.log(next);
+        if (next < 300) {
+          next = 10000;   // Wenn die Berechnung falsch läuft wird ein 10 Sekunden-Intervall verwendet
+        }
         if (next) {
           setTimeout(() => {
             this.refreshSonfgInfoAPI();
