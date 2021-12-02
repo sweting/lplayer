@@ -1,0 +1,21 @@
+<h1>Konfiguriere hier den Player für deine Station!</h1>
+
+<div class="form-content">
+<form>
+  <mat-form-field appearance="fill">
+    <mat-label>Sender/Station</mat-label>
+    <input matInput name="station" [(ngModel)]="station">
+  </mat-form-field>
+
+
+  <div *ngIf="station">
+    <mat-checkbox raised [(ngModel)]="config.sC" name="cover">Cover von Deezer Anzeigen</mat-checkbox><br>
+    <mat-checkbox raised [(ngModel)]="config.sLI" name="live">Live-Status anzeigen</mat-checkbox><br>
+    <mat-checkbox raised [(ngModel)]="config.sCS" name="show">Aktuelle Sendung anzeigen</mat-checkbox>
+
+    <p></p>
+    <a [href]="getPlayerLink()">{{getPlayerLink()}}</a>
+  </div>
+
+</form>
+</div>
