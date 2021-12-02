@@ -25,6 +25,17 @@
   top: 0;
 }
 
+.current-show,
+.live-badge {
+  font-size: 12px;
+  padding: 3px;
+  border-radius: 3px;
+}
+
+.live-badge {
+  background-color: #ad0303;
+}
+
 .header-container,
 .footer-container {
   align-self: center;

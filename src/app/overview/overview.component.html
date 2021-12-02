@@ -5,6 +5,20 @@
     </div>
     <div class="header-text">
       {{lautFMStationInfo.display_name}}
+
+      <ng-container *ngIf="settings.currentSettings.sLI || settings.currentSettings.sCS">
+        <br>
+      </ng-container>
+
+      <!--Live-Anzeige-->
+      <ng-container *ngIf="settings.currentSettings.sLI && liveStatus">
+        <span class="live-badge">live</span>
+      </ng-container>
+
+      <!--Aktuelle Sendung anzeigen-->
+      <ng-container *ngIf="settings.currentSettings.sCS">
+        <span class="current-show">{{lautFMStationInfo.current_playlist.name}}</span>
+      </ng-container>
     </div>
   </div>
 

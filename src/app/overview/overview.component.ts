@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import { SettingsService } from '../settings.service';
 
 declare var DZ: any;
 declare var IcecastMetadataPlayer: any;
@@ -45,6 +46,9 @@ export class OverviewComponent implements OnInit, OnDestroy {
   public configuredStation: string;
 
   public currentAlbum: string;
+
+  /** Gibt an, ob gerade live gesendet wird */
+  public liveStatus: boolean;
 
   /** Stationsdaten aus er LautFM-API */
   public lautFMStationInfo: any;
@@ -113,12 +117,14 @@ export class OverviewComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private cd: ChangeDetectorRef,
     private titleServ: Title,
+    public settings: SettingsService,
     @Inject(DOCUMENT) private readonly document: any
   ) {
     this.coverSrc = '';
     this.currentArtist = '';
     this.currentSong = '';
     this.currentAlbum = '';
+    this.liveStatus = false;
     this.configuredStation = '';
     this.currentStreamSrc = ' ';
     this._songChange = false;
@@ -139,6 +145,14 @@ export class OverviewComponent implements OnInit, OnDestroy {
     // Werte die übergebenen Routen-Parameter aus
     this.sub = this.route.params.subscribe(params => {
       this.configuredStation = params['station_name'];
+
+      if (params['config']) {
+        try {
+          this.settings.setSettingsFromBase64(params['config']);
+        } catch (error) {
+
+        }
+      }
 
       // Rountingdaten abfragen
       this.route.data.subscribe(data => {
@@ -279,6 +293,8 @@ export class OverviewComponent implements OnInit, OnDestroy {
           this.updateSongInfoGUI(res.title, res.artist.name);
         }
 
+        this.liveStatus = res.live;
+
         // Nächsten Abruf timen (2021-11-18 19:54:14 +0100)
         // Datum manuell parsen, da kein Standardformat und von Browsersprache abhängig
         // TODO: Zeitzone mit berücksichtigen
@@ -369,11 +385,48 @@ export class OverviewComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Versucht mittels Deezer ein Cover zu dem aktuell
-   * laufenden Song zu laden.
+   * Initialisiert die Deezer-API, um die Cover anzeigen zu können.
+   * Hierzu wird das Javascript von Deezer eingebunden
    * @param noAlbum Kein Album in der Suche verwenden
    */
-  loadCover(noAlbum: boolean = false) {
+  loadCover(noAlbum: boolean = false)
+  {
+    // Coveranzeige deaktiviert
+    if (!this.settings.currentSettings.sC)
+    {
+      this.coverSrc = '';
+
+      var images = [
+        { src: this.lautFMStationInfo.images.station_80x80,   sizes: '80x80',   type: 'image/png' },
+        { src: this.lautFMStationInfo.images.station_120x120, sizes: '120x120', type: 'image/png' },
+        { src: this.lautFMStationInfo.images.station_640x640, sizes: '640x640', type: 'image/png' },
+      ];
+      this.updateSongInfoMediaSession(images);
+      this.cd.detectChanges();
+      return;
+    }
+
+    if ('undefined' == typeof DZ) {
+      const script = this.document.createElement('script');
+      script.type = 'text/javascript';
+      script.async = true;
+      script.src = 'https://e-cdns-files.dzcdn.net/js/min/dz.js';
+      script.onload = () => {
+        this.loadCoverFromDeezer(noAlbum);
+      };
+
+      this.document.body.appendChild(script);
+    } else {
+      this.loadCoverFromDeezer(noAlbum);
+    }
+  }
+
+  /**
+   * Versucht mittels Deezer ein Cover zu dem aktuell
+   * laufenden Song zu laden. Diese Methode kann erst nach der Initialisierung des Deezer-Service aufgerufen werden
+   * @param noAlbum Kein Album in der Suche verwenden
+   */
+   private loadCoverFromDeezer(noAlbum: boolean = false) {
     let param_album = '';
     if (this.currentAlbum != '' && !noAlbum)
     param_album = 'album:"' + this.currentAlbum + '"';
@@ -394,7 +447,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
         this.updateSongInfoMediaSession(images);
         this.cd.detectChanges();
       } else if (!noAlbum) {
-        this.loadCover(true); // Nochmal ohne Album versuchen
+        this.loadCoverFromDeezer(true); // Nochmal ohne Album versuchen
       } else {
         this.coverSrc = '';
 
