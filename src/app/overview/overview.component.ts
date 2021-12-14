@@ -327,6 +327,11 @@ export class OverviewComponent implements OnInit, OnDestroy {
           }, next);
         }
       }
+    }, (error) => {
+      console.log('Songinfo mit Fehler', error);
+      setTimeout(() => {
+        this.refreshSonfgInfoAPI();
+      }, 10000);
     });
   }
 
