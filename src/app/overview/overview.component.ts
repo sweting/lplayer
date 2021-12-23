@@ -59,6 +59,13 @@ export class OverviewComponent implements OnInit, OnDestroy {
    */
   public IceCaseDirect: boolean = false;
 
+  /** 
+   * Gibt an, ob es sich um einen Frame handelt. 
+   * Bei Frames wird beim Klick auf den Play-Button 
+   * der Player in einem Popup oder neuen Tab geöffnet.
+   * */
+  public isFrame: boolean = false;
+
   /** Player-Element */
   public audio: any;
 
@@ -157,6 +164,9 @@ export class OverviewComponent implements OnInit, OnDestroy {
       // Rountingdaten abfragen
       this.route.data.subscribe(data => {
         this.IceCaseDirect = data.icecastMeta;
+        if (data.isFrame) {
+          this.isFrame = data.isFrame;
+        }
         this.loadStationInfo();
       });
     });
@@ -232,10 +242,24 @@ export class OverviewComponent implements OnInit, OnDestroy {
     });
   }
 
+  private openPopup() {
+    var uri = document.location.origin + '/' + this.configuredStation + '/' +  this.settings.getBase64Settings();
+    var fenster = window.open(uri, this.configuredStation + ' | LPlayer', "width=600,height=400,status=yes,scrollbars=yes,resizable=yes");
+    if (fenster) {
+      fenster.focus();
+    }
+  }
+
   /**
    * Starte den aktuellen Audio-Stream
    */
   onPlay() {
+    if (this.isFrame)
+    {
+      this.openPopup();
+      return;
+    }
+
     if (this.audio) {
       this.audio.play();
       this.playerState = PlayerState.playing;

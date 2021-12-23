@@ -15,6 +15,37 @@
 
     <p></p>
     <a [href]="getPlayerLink()">{{getPlayerLink()}}</a>
+    <p></p>
+
+    <h3>Frame-Einstellungen</h3>
+    <div class="frame-content">
+      <div class="frame-config-form">
+        <mat-checkbox raised [(ngModel)]="frameFullWidth" name="show">Ganze verfügbare Breite</mat-checkbox>
+        <br>
+        <mat-form-field appearance="fill">
+          <mat-label>Breite</mat-label>
+          <input matInput type="number" name="frameWidth" [(ngModel)]="frameWidth">
+        </mat-form-field>
+        <br>
+        <mat-form-field appearance="fill">
+          <mat-label>Höhe</mat-label>
+          <input matInput type="number" name="frameHeight" [(ngModel)]="frameHeight">
+        </mat-form-field>
+        <br>
+        <br>
+        <b>Einbindungscode</b>
+        <br>Kopieren und in die Webseite einbauen.
+        <br>
+        <textarea readonly style="width: 300px; height: 100px;">{{getFrameHTML()}}</textarea>
+      </div>
+
+      <div class="frame-sample">
+        <b>Vorschau:</b><br>
+        <iframe *ngIf="!frameFullWidth" [src]="getFrameUri()" [width]="frameWidth" [height]="frameHeight" style="border: none;"></iframe>
+        <iframe *ngIf="frameFullWidth" [src]="getFrameUri()"  width="100%" [height]="frameHeight" style="border: none;"></iframe>
+      </div>
+    </div>
+  
   </div>
 
 </form>
