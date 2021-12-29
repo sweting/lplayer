@@ -468,7 +468,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
     if (this.currentAlbum != '' && !noAlbum)
       param_album = 'album:"' + this.currentAlbum + '"';
 
-    const res = await this.DZ_API('/search?q=artist:"' + this.currentArtist + '"track:"' + this.currentSong + '"' + param_album);
+    const res = await this.DZ_API('/search?q=artist:"' + this.currentArtist + '"track:"' + this.currentSong + '"' + param_album+"&order=RATING_DESC");
 
     if (res.data && res.data.length > 0) {
 
