@@ -5,6 +5,10 @@ import { Component, OnInit } from '@angular/core';
   templateUrl: './frame.component.html',
   styleUrls: ['./frame.component.scss']
 })
+/**
+ * ATTENTION.
+ * This component is not used yet
+ */
 export class FrameComponent implements OnInit {
 
   constructor() { }
