@@ -14,4 +14,8 @@ import { FrameComponent } from './frame.component';
     FrameRoutingModule
   ]
 })
+/**
+ * ATTENTION!
+ * This moudle is not used until now
+ */
 export class FrameModule { }

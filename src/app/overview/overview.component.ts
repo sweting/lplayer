@@ -167,7 +167,12 @@ export class OverviewComponent implements OnInit, OnDestroy {
         if (data.isFrame) {
           this.isFrame = data.isFrame;
         }
+
+        // Refresh station info every 5 minutes
         this.loadStationInfo();
+        setInterval(() => {
+          this.loadStationInfo();
+        }, 1000 * 300);
       });
     });
 
@@ -191,22 +196,19 @@ export class OverviewComponent implements OnInit, OnDestroy {
     this.http.get(this.apiURI_laut + 'station/' + this.configuredStation).subscribe((res) => {
       this.lautFMStationInfo = res;
 
-      if (this.lautFMStationInfo && this.lautFMStationInfo.stream_url)
-      {
+      if (this.lautFMStationInfo && this.lautFMStationInfo.stream_url) {
         this.refreshSonfgInfoAPI();
 
         this.currentStreamSrc = this.lautFMStationInfo.stream_url;
 
         // Browsertitel und Icon
         this.titleServ.setTitle(this.lautFMStationInfo.display_name + ' | Lplayer');
-        if (this.favIcon)
-        {
+        if (this.favIcon) {
           this.favIcon.href = this.lautFMStationInfo.images.station_80x80;
         }
 
         // Den Icecastplayer nur erst jetzt laden
-        if (this.IceCaseDirect)
-        {
+        if (this.IceCaseDirect) {
           if ('undefined' == typeof IcecastMetadataPlayer) {
             const script = this.document.createElement('script');
             script.type = 'text/javascript';
@@ -220,8 +222,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
           } else {
             this.loadIcecasplayer();
           }
-        } else
-        {
+        } else {
           // Die Stream-Resource wird geladen, sobald auf Play gedrückt wird
           this.HTML5player = new Audio(' ');
         }
@@ -243,7 +244,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
   }
 
   private openPopup() {
-    var uri = document.location.origin + '/' + this.configuredStation + '/' +  this.settings.getBase64Settings();
+    var uri = document.location.origin + '/' + this.configuredStation + '/' + this.settings.getBase64Settings();
     var fenster = window.open(uri, this.configuredStation + ' | LPlayer', "width=600,height=400,status=yes,scrollbars=yes,resizable=yes");
     if (fenster) {
       fenster.focus();
@@ -254,8 +255,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
    * Starte den aktuellen Audio-Stream
    */
   onPlay() {
-    if (this.isFrame)
-    {
+    if (this.isFrame) {
       this.openPopup();
       return;
     }
@@ -287,7 +287,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
       if (!this.songUpdateFromAPI)
         this.songUpdateFromAPI = true;
 
-        this.playerState = PlayerState.stopped;
+      this.playerState = PlayerState.stopped;
     } else if (this.HTML5player) {
       this.HTML5player.pause();
       this.playerState = PlayerState.stopped;
@@ -303,8 +303,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
 
   /** Refresh Song-Info */
   refreshSonfgInfoAPI() {
-    if (!this.songUpdateFromAPI)
-    {
+    if (!this.songUpdateFromAPI) {
       return;
     }
 
@@ -333,7 +332,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
             Number(matches[3])
           );
           endDate.setUTCHours(
-            Number(matches[4]) + (Number(matches[7])*-1),
+            Number(matches[4]) + (Number(matches[7]) * -1),
             Number(matches[5]),
             Number(matches[6])
           );
@@ -364,7 +363,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
    * ändern.
    * @param metadata Metadatenobjekt
    */
-   onMetadataChange(metadata: StreamMetaData) {
+  onMetadataChange(metadata: StreamMetaData) {
     this.songUpdateFromAPI = false;
     //console.log(metadata.StreamTitle);
 
@@ -386,10 +385,8 @@ export class OverviewComponent implements OnInit, OnDestroy {
    * @param artist Künstler
    * @param album Album sonst = ''
    */
-  updateSongInfoGUI(song: string, artist: string, album: string = '')
-  {
-    if (this.currentArtist != artist || this.currentSong != song)
-    {
+  updateSongInfoGUI(song: string, artist: string, album: string = '') {
+    if (this.currentArtist != artist || this.currentSong != song) {
       this.currentSong = song;
       this.currentArtist = artist;
       this.loadCover();
@@ -418,15 +415,13 @@ export class OverviewComponent implements OnInit, OnDestroy {
    * Hierzu wird das Javascript von Deezer eingebunden
    * @param noAlbum Kein Album in der Suche verwenden
    */
-  loadCover(noAlbum: boolean = false)
-  {
+  loadCover(noAlbum: boolean = false) {
     // Coveranzeige deaktiviert
-    if (!this.settings.currentSettings.sC)
-    {
+    if (!this.settings.currentSettings.sC) {
       this.coverSrc = '';
 
       var images = [
-        { src: this.lautFMStationInfo.images.station_80x80,   sizes: '80x80',   type: 'image/png' },
+        { src: this.lautFMStationInfo.images.station_80x80, sizes: '80x80', type: 'image/png' },
         { src: this.lautFMStationInfo.images.station_120x120, sizes: '120x120', type: 'image/png' },
         { src: this.lautFMStationInfo.images.station_640x640, sizes: '640x640', type: 'image/png' },
       ];
@@ -451,45 +446,88 @@ export class OverviewComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Versucht mittels Deezer ein Cover zu dem aktuell
-   * laufenden Song zu laden. Diese Methode kann erst nach der Initialisierung des Deezer-Service aufgerufen werden
-   * @param noAlbum Kein Album in der Suche verwenden
+   * Requests some data from deezer API and returns a promis. 
+   * So we can handle requests in an async function with await
+   * @returns Promis with Result from API
    */
-   private loadCoverFromDeezer(noAlbum: boolean = false) {
+  private DZ_API(request: string): Promise<any> {
+    return new Promise<any>((result, err) => {
+      DZ.api(request, (res: any) => {
+        result(res);
+      });
+    });
+  }
+
+  /**
+   * Try to get a cover art from deezer api fro current song
+   * This method can be called after initialitzing the deezer API in this application
+   * @param noAlbum Ignor album in search request
+   */
+  private async loadCoverFromDeezer(noAlbum: boolean = false) {
     let param_album = '';
     if (this.currentAlbum != '' && !noAlbum)
-    param_album = 'album:"' + this.currentAlbum + '"';
-    DZ.api('/search?q=artist:"' + this.currentArtist + '"track:"' + this.currentSong + '"' + param_album, (res: any) =>  {
-      if (res.data && res.data.length > 0) {
+      param_album = 'album:"' + this.currentAlbum + '"';
 
-        const mediaElement = res.data[0]; // Verwendetes Ergebnis aus der API
+    const res = await this.DZ_API('/search?q=artist:"' + this.currentArtist + '"track:"' + this.currentSong + '"' + param_album);
 
-        this.coverSrc = mediaElement.album.cover_big;
+    if (res.data && res.data.length > 0) {
 
-        var images = [
-          { src: mediaElement.album.cover_small, sizes: '56x56', type: 'image/jpg' },
-          { src: mediaElement.album.cover_medium, sizes: '250x250', type: 'image/jpg' },
-          { src: mediaElement.album.cover_big, sizes: '500x500', type: 'image/jpg' },
-          { src: mediaElement.album.cover_xl, sizes: '1000x1000', type: 'image/jpg' },
-        ];
+      let mediaElement = res.data[0];   // Use default the first result
+      let bFoundSpecialResult = false;  // Found an other result
 
-        this.updateSongInfoMediaSession(images);
-        this.cd.detectChanges();
-      } else if (!noAlbum) {
-        this.loadCoverFromDeezer(true); // Nochmal ohne Album versuchen
-      } else {
-        this.coverSrc = '';
-
-        var images = [
-          { src: this.lautFMStationInfo.images.station_80x80,   sizes: '80x80',   type: 'image/png' },
-          { src: this.lautFMStationInfo.images.station_120x120, sizes: '120x120', type: 'image/png' },
-          { src: this.lautFMStationInfo.images.station_640x640, sizes: '640x640', type: 'image/png' },
-        ];
-
-        this.updateSongInfoMediaSession(images);
-        this.cd.detectChanges();
+      // Loop throug results and look for Album information to get 
+      // better cover art results.
+      // 1. look for an album with same name as the song title
+      for (let i = 0; i < res.data.length; i++) {
+        if (res.data[i].album.title.toUpperCase() == this.currentSong.toUpperCase()) {
+          mediaElement = res.data[i];
+          console.log('Album is single ' + i);
+          bFoundSpecialResult = true;
+          break;
+        }
       }
-    });
+
+      // Loop throug results and look for Album information to get 
+      // better cover art results.
+      // 2. Look for an album where the artist matching
+      for (let i = 0; i < res.data.length && !bFoundSpecialResult; i++) {
+        let album = await this.DZ_API('/album/'+res.data[i].album.id);
+        if (album.artist.name.toUpperCase() == this.currentArtist.toUpperCase())
+        {
+          mediaElement = res.data[i];
+          console.log('Album is not first result' + i);
+          bFoundSpecialResult = true;
+          break;
+        }
+      }
+
+
+      this.coverSrc = mediaElement.album.cover_big;
+
+      var images = [
+        { src: mediaElement.album.cover_small, sizes: '56x56', type: 'image/jpg' },
+        { src: mediaElement.album.cover_medium, sizes: '250x250', type: 'image/jpg' },
+        { src: mediaElement.album.cover_big, sizes: '500x500', type: 'image/jpg' },
+        { src: mediaElement.album.cover_xl, sizes: '1000x1000', type: 'image/jpg' },
+      ];
+
+      this.updateSongInfoMediaSession(images);
+      this.cd.detectChanges();
+    } else if (!noAlbum) {
+      this.loadCoverFromDeezer(true); // try again without album
+    } else {
+      this.coverSrc = '';
+
+      var images = [
+        { src: this.lautFMStationInfo.images.station_80x80, sizes: '80x80', type: 'image/png' },
+        { src: this.lautFMStationInfo.images.station_120x120, sizes: '120x120', type: 'image/png' },
+        { src: this.lautFMStationInfo.images.station_640x640, sizes: '640x640', type: 'image/png' },
+      ];
+
+      this.updateSongInfoMediaSession(images);
+      this.cd.detectChanges();
+    }
+
   }
 
 }
