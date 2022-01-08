@@ -222,7 +222,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
           } else {
             this.loadIcecasplayer();
           }
-        } else {
+        } else if (!this.HTML5player){
           // Die Stream-Resource wird geladen, sobald auf Play gedrückt wird
           this.HTML5player = new Audio(' ');
         }
