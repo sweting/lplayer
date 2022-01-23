@@ -17,6 +17,8 @@
   background-color: rgba(80, 80, 80, 0.733);
 }
 
+
+
 .footer-bar {
   bottom: 0;
 }
@@ -72,4 +74,33 @@
 #station-logo {
   width: 40px;
   height: 40px;
+}
+
+/** Optimizing for special Things (Cover over the Player) */
+@media (max-height: 299px) {
+  .header-bar {
+    display: none;
+  }
+
+
+  .middle-content img {
+    max-height: calc(100vh - 120px);
+    max-width:  100%;
+  }
+}
+
+#footer-cover {
+    text-align: right;
+    flex-grow: 1;
+    padding-right: 10px;
+}
+
+#footer-cover img {
+  height: 50px;
+}
+
+@media (min-height: 61px) {
+  #footer-cover {
+    display: none;
+  } 
 }

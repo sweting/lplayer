@@ -59,5 +59,10 @@
       <span style="font-size: 12pt; font-weight: bold;">{{currentSong}}</span><br>
       <span style="font-size: 11pt;">{{currentArtist}}</span>
     </div>
+
+    <div class="footer-container" id="footer-cover">
+      <img [src]="coverSrc" *ngIf="coverSrc != ''">
+      <img [src]="lautFMStationInfo.images.station_640x640" *ngIf="coverSrc == ''">
+    </div>
   </div>
 </div>
