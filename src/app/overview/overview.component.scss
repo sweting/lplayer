@@ -92,6 +92,10 @@
     display: none;
   } 
 
+  
+}
+
+@media (max-height: 60px) {
   .header-bar {
     display: none;
   }
