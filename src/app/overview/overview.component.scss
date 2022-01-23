@@ -76,18 +76,6 @@
   height: 40px;
 }
 
-/** Optimizing for special Things (Cover over the Player) */
-@media (max-height: 299px) {
-  .header-bar {
-    display: none;
-  }
-
-
-  .middle-content img {
-    max-height: calc(100vh - 120px);
-    max-width:  100%;
-  }
-}
 
 #footer-cover {
     text-align: right;
@@ -103,4 +91,8 @@
   #footer-cover {
     display: none;
   } 
+
+  .header-bar {
+    display: none;
+  }
 }
