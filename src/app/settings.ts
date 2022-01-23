@@ -12,4 +12,14 @@ export class Settings {
 
   /** Name der aktuell laufenden Senung anzeigen */
   public sCS: boolean = false;
+
+  /** Hintergrundfarbe */
+  public cB: string = "rgb(14, 13, 13)";
+
+  /** Overlay-Schriftfarbe */
+  public cO: string = "rgba(80, 80, 80, 0.733)";
+  
+  /** Schriftfarbe */
+  public cF: string = "#fafafa";
+
 }

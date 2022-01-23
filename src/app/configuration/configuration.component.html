@@ -11,13 +11,26 @@
   <div *ngIf="station">
     <mat-checkbox raised [(ngModel)]="config.sC" name="cover">Cover von Deezer Anzeigen</mat-checkbox><br>
     <mat-checkbox raised [(ngModel)]="config.sLI" name="live">Live-Status anzeigen</mat-checkbox><br>
-    <mat-checkbox raised [(ngModel)]="config.sCS" name="show">Aktuelle Sendung anzeigen</mat-checkbox>
+    <mat-checkbox raised [(ngModel)]="config.sCS" name="show">Aktuelle Sendung anzeigen</mat-checkbox><br>
+
+    <b>Hintergrundfarbe</b> <br>
+    <input [(colorPicker)]="config.cB" [style.background]="config.cB"/><br>
+    <br>
+    <b>Balkenfarbe (oben und unten)</b> <br>
+    <input [(colorPicker)]="config.cO" [style.background]="config.cO"/><br>
+    <br>
+    <b>Schriftfarbe</b> <br>
+    <input [(colorPicker)]="config.cF" [style.background]="config.cF"/><br>
 
     <p></p>
     <a [href]="getPlayerLink()">{{getPlayerLink()}}</a>
     <p></p>
 
     <h3>Frame-Einstellungen</h3>
+    <p>
+      Wenn der Frame in der Höhe kleiner als 200 eingestellt wird, verschwindet die Kopfzeile mit dem Sender.<br>
+      Wir der Frame auf eine Höhe von 60 eingestellt, erscheint das Cover neben dem Lietitel.
+    </p>
     <div class="frame-content">
       <div class="frame-config-form">
         <mat-checkbox raised [(ngModel)]="frameFullWidth" name="show">Ganze verfügbare Breite</mat-checkbox>

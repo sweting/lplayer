@@ -1,5 +1,5 @@
 <div class="main-player" *ngIf="lautFMStationInfo">
-  <div class="header-bar">
+  <div class="header-bar" [style.background]="settings.currentSettings.cO" [style.color]="settings.currentSettings.cF">
     <div class="header-container">
       <img id="station-logo" [src]="lautFMStationInfo.images.station_80x80">
     </div>
@@ -22,7 +22,7 @@
     </div>
   </div>
 
-  <div class="middle-content">
+  <div class="middle-content" [style.background]="settings.currentSettings.cB">
     <img [src]="coverSrc" *ngIf="coverSrc != ''">
     <img [src]="lautFMStationInfo.images.station_640x640" *ngIf="coverSrc == ''">
   </div>
@@ -31,7 +31,7 @@
     <p>Sorry, your browser does not support this player. :-(</p>
   </audio>-->
 
-  <div class="footer-bar">
+  <div class="footer-bar" [style.background]="settings.currentSettings.cO" [style.color]="settings.currentSettings.cF">
     <div class="footer-container" *ngIf="audio">
       <img src="assets/play.png" class="player-btn" (click)="onPlay()" *ngIf="audio.state == 'stopped'">
       <img src="assets/wait.png" class="player-btn" *ngIf="audio.state != 'playing' && audio.state != 'stopped'">
@@ -58,6 +58,11 @@
     <div class="footer-text">
       <span style="font-size: 12pt; font-weight: bold;">{{currentSong}}</span><br>
       <span style="font-size: 11pt;">{{currentArtist}}</span>
+    </div>
+
+    <div class="footer-container" id="footer-cover" >
+      <img [src]="coverSrc" *ngIf="coverSrc != ''">
+      <img [src]="lautFMStationInfo.images.station_640x640" *ngIf="coverSrc == ''">
     </div>
   </div>
 </div>
