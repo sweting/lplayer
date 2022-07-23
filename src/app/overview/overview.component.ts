@@ -307,7 +307,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.http.get<any>(this.apiURI_laut + 'station/' + this.configuredStation + '/current_song?t=' + Date.now()).subscribe((res) => {
+    this.http.get<any>(this.apiURI_laut + 'station/' + this.configuredStation + '/current_song').subscribe((res) => {
       if (res && res.title) {
 
         if (res.album) {
@@ -341,7 +341,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
         }
 
         console.log(next);
-        if (next < 300) {
+        if (next < 3000) {  // Wenn das Intervall kleiner 5 Sekunden ist, erst nach 10 Sekunden anfragen
           next = 10000;   // Wenn die Berechnung falsch läuft wird ein 10 Sekunden-Intervall verwendet
         }
         if (next) {
